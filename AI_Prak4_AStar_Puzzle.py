@@ -1,0 +1,127 @@
+from simpleai.search import astar, SearchProblem
+
+
+class PuzzleSolver(SearchProblem):
+
+    # menentukan langkah-langkah yang mungkin dari konfigurasi puzzle
+    def actions(self, cur_state):
+
+        rows = string_to_list(cur_state)
+
+        row_empty, col_empty = get_location(rows, 'e')
+
+        actions = []
+
+        if row_empty > 0:
+            actions.append(rows[row_empty - 1][col_empty])
+
+        if row_empty < 2:
+            actions.append(rows[row_empty + 1][col_empty])
+
+        if col_empty > 0:
+            actions.append(rows[row_empty][col_empty - 1])
+
+        if col_empty < 2:
+            actions.append(rows[row_empty][col_empty + 1])
+
+        return actions
+
+    # mengembalikan konfigurasi puzzle baru setelah memindahkan satu ubin
+    def result(self, state, action):
+
+        rows = string_to_list(state)
+
+        row_empty, col_empty = get_location(rows, 'e')
+
+        row_new, col_new = get_location(rows, action)
+
+        rows[row_empty][col_empty], rows[row_new][col_new] = \
+            rows[row_new][col_new], rows[row_empty][col_empty]
+
+        return list_to_string(rows)
+
+    # memeriksa apakah konfigurasi saat ini sama dengan GOAL
+    def is_goal(self, state):
+
+        return state == GOAL
+
+    # menghitung estimasi biaya menggunakan Manhattan Distance
+    def heuristic(self, state):
+
+        rows = string_to_list(state)
+
+        distance = 0
+
+        for number in '12345678e':
+
+            row_new, col_new = get_location(rows, number)
+
+            row_new_goal, col_new_goal = goal_positions[number]
+
+            distance += abs(row_new - row_new_goal) + \
+                        abs(col_new - col_new_goal)
+
+        return distance
+
+
+def list_to_string(input_list):
+
+    return '\n'.join(['-'.join(x) for x in input_list])
+
+
+def string_to_list(input_string):
+
+    return [x.split('-') for x in input_string.split('\n')]
+
+
+# mengembalikan koordinat (baris, kolom) suatu elemen
+def get_location(rows, input_element):
+
+    for i, row in enumerate(rows):
+
+        for j, item in enumerate(row):
+
+            if item == input_element:
+
+                return i, j
+
+
+GOAL = '''1-2-3
+4-5-6
+7-8-e'''
+
+INITIAL = '''1-e-2
+6-3-4
+7-5-8'''
+
+goal_positions = {}
+
+rows_goal = string_to_list(GOAL)
+
+for number in '12345678e':
+
+    goal_positions[number] = get_location(rows_goal, number)
+
+
+result = astar(PuzzleSolver(INITIAL))
+
+
+for i, (action, state) in enumerate(result.path()):
+
+    print()
+
+    if action is None:
+
+        print('Initial Configuration')
+
+    elif i == len(result.path()) - 1:
+
+        print('After Moving', action,
+              'Into the Empty Space. Goal Achieved!')
+
+    else:
+
+        print('After Moving', action,
+              'Into the Empty Space')
+
+    print(state)
